@@ -16,7 +16,7 @@ import type { ReadingStatus } from '../../types';
 import { buildEntryView } from '../../lib/entryView';
 import { bar } from '../../lib/bar';
 import { sparkChar } from '../../lib/sparkline';
-import { addDays, today, weekday } from '../../lib/format';
+import { addDays, formatDateTime, formatTime, today, weekday } from '../../lib/format';
 import { STATUS_COLOR, STATUS_LABEL } from '../../lib/status';
 import { CoverImage } from '../CoverImage';
 
@@ -160,8 +160,8 @@ export function BookDetail() {
               p.{s.start_page} → {s.end_page != null ? s.end_page : '…'}
             </div>
             <div class="session-dates">
-              {s.started_at.replace('T', ' ').slice(0, 16)}
-              {s.ended_at ? ` → ${s.ended_at.replace('T', ' ').slice(11, 16)}` : ' (in progress)'}
+              {formatDateTime(s.started_at)}
+              {s.ended_at ? ` → ${formatTime(s.ended_at)}` : ' (in progress)'}
             </div>
           </div>
           {!s.ended_at && (
