@@ -34,3 +34,11 @@ export function formatTime(iso: string): string {
   const d = new Date(iso);
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+
+/** Formats the duration between two ISO timestamps as "37m" or "1h05m". */
+export function formatDuration(startIso: string, endIso: string): string {
+  const minutes = Math.max(0, Math.round((new Date(endIso).getTime() - new Date(startIso).getTime()) / 60000));
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return hours > 0 ? `${hours}h${pad(mins)}m` : `${mins}m`;
+}
