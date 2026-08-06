@@ -41,7 +41,7 @@ export function BookDetail() {
 
   const view = buildEntryView(detailSessions.value);
   const stats = entryStats.value[entry.id];
-  const percent = stats?.percent_complete != null ? Math.round(stats.percent_complete) : null;
+  const percent = entry.status === 'read' ? 100 : stats?.percent_complete != null ? Math.round(stats.percent_complete) : null;
   const daysElapsed = stats?.days_elapsed ?? null;
   const pbar = bar(percent, 24);
 

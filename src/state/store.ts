@@ -262,9 +262,11 @@ export async function changeStatus(entryId: number, newStatus: ReadingStatus): P
   try {
     const updated = await entriesApi.updateEntry(entryId, patch);
     entries.value = entries.value.map((e) => (e.id === entryId ? updated : e));
+    modal.value = null;
     showToast(newStatus === 'read' ? 'BOOK FINISHED' : 'STATUS UPDATED');
     void loadOverviewStats();
   } catch {
+    modal.value = null;
     void loadEntries();
   }
 }
