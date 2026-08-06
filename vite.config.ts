@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [
     preact(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       includeAssets: ['icons/*.png'],
       manifest: {
         name: 'Reading Tracker',

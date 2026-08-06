@@ -20,6 +20,12 @@ export function deleteEntry(id: number): Promise<void> {
   return api.delete<void>(`/reading_list_entries/${id}`);
 }
 
+export function updateEntryPages(id: number, totalPages: number): Promise<ReadingListEntry> {
+  return api.patch<ReadingListEntry>(`/reading_list_entries/${id}/pages`, {
+    reading_list_entry: { total_pages: totalPages },
+  });
+}
+
 export function listSessions(entryId: number): Promise<ReadingSession[]> {
   return api.get<ReadingSession[]>(`/reading_list_entries/${entryId}/reading_sessions`);
 }

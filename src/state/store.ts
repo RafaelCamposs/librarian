@@ -269,6 +269,19 @@ export async function changeStatus(entryId: number, newStatus: ReadingStatus): P
   }
 }
 
+export async function updateEntryPages(entryId: number, totalPages: number): Promise<void> {
+  const prev = entries.value;
+  entries.value = entries.value.map((e) => (e.id === entryId ? { ...e, total_pages: totalPages } : e));
+  try {
+    const updated = await entriesApi.updateEntryPages(entryId, totalPages);
+    entries.value = entries.value.map((e) => (e.id === entryId ? updated : e));
+    showToast('PAGES UPDATED');
+  } catch (err) {
+    entries.value = prev;
+    showToast(err instanceof ApiError ? err.message : 'COULD NOT UPDATE PAGES');
+  }
+}
+
 export async function deleteEntry(id: number): Promise<void> {
   try {
     await entriesApi.deleteEntry(id);

@@ -19,6 +19,8 @@ export interface ReadingListEntry {
   status: ReadingStatus;
   started_at: string | null;
   finished_at: string | null;
+  /** Per-entry override of the book's page count (this edition/printing may differ from the API's lookup). */
+  total_pages?: number | null;
 }
 
 export interface ReadingSession {

@@ -1,3 +1,4 @@
+import { useState } from 'preact/hooks';
 import {
   backToList,
   bookById,
@@ -9,6 +10,7 @@ import {
   selectedEntry,
   startSession,
   changeStatus,
+  updateEntryPages,
 } from '../../state/store';
 import type { ReadingStatus } from '../../types';
 import { buildEntryView } from '../../lib/entryView';
@@ -18,12 +20,24 @@ import { addDays, today, weekday } from '../../lib/format';
 import { STATUS_COLOR, STATUS_LABEL } from '../../lib/status';
 import { CoverImage } from '../CoverImage';
 
-const STATUS_OPTIONS: ReadingStatus[] = ['want_to', 'stopped', 'unfinished'];
+const STATUS_OPTIONS: ReadingStatus[] = ['read', 'stopped', 'unfinished'];
 
 export function BookDetail() {
   const entry = selectedEntry.value;
+  const [editingPages, setEditingPages] = useState(false);
+  const [pagesInput, setPagesInput] = useState('');
   if (!entry) return null;
   const book = bookById.value.get(entry.book_id);
+  const totalPages = entry.total_pages ?? book?.total_pages ?? null;
+
+  const entryId = entry.id;
+  function savePages() {
+    setEditingPages(false);
+    const value = parseInt(pagesInput, 10);
+    if (!Number.isNaN(value) && value > 0 && value !== totalPages) {
+      void updateEntryPages(entryId, value);
+    }
+  }
 
   const view = buildEntryView(detailSessions.value);
   const stats = entryStats.value[entry.id];
@@ -56,7 +70,32 @@ export function BookDetail() {
             {book?.authors.join(', ')}
           </div>
           <div style={{ fontSize: 11, color: 'var(--color-faint)' }}>
-            {book?.total_pages ?? '—'} pages · {book?.published_year ?? '—'} · ISBN {book?.isbn}
+            {editingPages ? (
+              <input
+                class="text-input"
+                type="number"
+                autofocus
+                value={pagesInput}
+                onInput={(e) => setPagesInput((e.target as HTMLInputElement).value)}
+                onBlur={savePages}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                  if (e.key === 'Escape') setEditingPages(false);
+                }}
+                style={{ width: 60, height: 22, padding: '2px 4px', display: 'inline-block' }}
+              />
+            ) : (
+              <span
+                onClick={() => {
+                  setPagesInput(totalPages != null ? String(totalPages) : '');
+                  setEditingPages(true);
+                }}
+              >
+                {totalPages ?? '—'} pages
+              </span>
+            )}
+            {' · '}
+            {book?.published_year ?? '—'} · ISBN {book?.isbn}
           </div>
         </div>
       </div>
@@ -82,10 +121,10 @@ export function BookDetail() {
         )}
       </div>
 
-      {book?.total_pages != null && (
+      {totalPages != null && (
         <>
           <div class="section-label">PROGRESS — {percent != null ? `${percent}%` : '—'}</div>
-          <div class="block-bar" style={{ fontSize: 18, marginBottom: 6 }}>
+          <div class="block-bar" style={{ fontSize: 18, marginBottom: 6, textAlign: 'center' }}>
             <span class="filled">{pbar.filled}</span>
             <span class="empty">{pbar.empty}</span>
           </div>
@@ -128,7 +167,7 @@ export function BookDetail() {
           {!s.ended_at && (
             <div
               class="finish-btn"
-              onClick={() => openFinishSessionModal(s.id, view.currentPage, book?.total_pages ?? null)}
+              onClick={() => openFinishSessionModal(s.id, view.currentPage, totalPages)}
             >
               FINISH
             </div>

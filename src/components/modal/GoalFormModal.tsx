@@ -39,7 +39,7 @@ export function GoalFormModal() {
             type="date"
             value={m.periodStart}
             onInput={(e) => patchModal({ periodStart: (e.target as HTMLInputElement).value })}
-            style={{ fontSize: 13, padding: 10 }}
+            style={{ fontSize: 16, padding: 10 }}
           />
         </div>
         <div style={{ flex: 1 }}>
@@ -49,7 +49,7 @@ export function GoalFormModal() {
             type="date"
             value={m.periodEnd}
             onInput={(e) => patchModal({ periodEnd: (e.target as HTMLInputElement).value })}
-            style={{ fontSize: 13, padding: 10 }}
+            style={{ fontSize: 16, padding: 10 }}
           />
         </div>
       </div>
