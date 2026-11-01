@@ -8,6 +8,7 @@ import {
   entryTitle,
   goTo,
   openFinishSessionModal,
+  openGoal,
   openSession,
   overviewStats,
   selectEntry,
@@ -81,7 +82,12 @@ export function Dashboard() {
         goals.map((g) => {
           const pct = g.target_books ? Math.min(100, Math.round((g.books_finished / g.target_books) * 100)) : 0;
           return (
-            <div class="card" style={{ marginBottom: 10 }} key={g.goal_id}>
+            <div
+              class="card"
+              style={{ marginBottom: 10, cursor: 'pointer' }}
+              key={g.goal_id}
+              onClick={() => openGoal(g.goal_id, 'dashboard')}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 8 }}>
                 <span>{goalLabel(g)}</span>
                 <span style={{ color: 'var(--color-muted)' }}>

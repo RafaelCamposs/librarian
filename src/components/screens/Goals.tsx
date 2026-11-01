@@ -1,44 +1,43 @@
-import { deleteGoal, entries, goals, openConfirm, openGoalForm } from '../../state/store';
-import { goalLabel } from '../../lib/goals';
+import { goals, openGoal, openGoalForm } from '../../state/store';
+import type { Goal } from '../../types';
+import { compareGoalsNewestFirst, goalLabel, goalStateColor, goalStateLabel } from '../../lib/goals';
 
 export function Goals() {
+  const sorted = [...goals.value].sort(compareGoalsNewestFirst);
+  const sections: { label: string; items: Goal[] }[] = [
+    { label: 'CURRENT', items: sorted.filter((g) => g.state === 'current') },
+    { label: 'UPCOMING', items: sorted.filter((g) => g.state === 'upcoming') },
+    { label: 'HISTORY', items: sorted.filter((g) => g.state === 'closed') },
+  ];
+
   return (
     <>
       <div class="divider-header">── GOALS ──────────────────</div>
-      <div class="btn btn-dashed-accent" style={{ marginBottom: 14 }} onClick={() => openGoalForm(null)}>
+      <div class="btn btn-dashed-accent" style={{ marginBottom: 20 }} onClick={() => openGoalForm(null)}>
         + NEW GOAL
       </div>
-      {goals.value.map((g) => {
-        const finished = entries.value.filter(
-          (e) => e.status === 'read' && e.finished_at && e.finished_at >= g.period_start && e.finished_at <= g.period_end,
-        ).length;
-        return (
-          <div class="card" style={{ marginBottom: 10 }} key={g.id}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ fontSize: 13, fontWeight: 600 }}>{goalLabel(g)}</span>
-              <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>
-                {g.period_start} → {g.period_end}
-              </span>
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 10 }}>
-              {finished} / {g.target_books} books
-            </div>
-            <div class="btn-row">
-              <div class="goal-edit-btn" onClick={() => openGoalForm(g)}>
-                EDIT
+      {sections
+        .filter((section) => section.items.length > 0)
+        .map((section) => (
+          <div class="goal-section" key={section.label}>
+            <div class="section-label">{section.label}</div>
+            {section.items.map((g) => (
+              <div class="list-row goal-row" key={g.id} onClick={() => openGoal(g.id, 'goals')}>
+                <span class="goal-row-label">{goalLabel(g)}</span>
+                <span class="goal-row-count">
+                  {g.books_finished} / {g.target_books}
+                  {g.state === 'closed' ? '' : ' books'}
+                </span>
+                {g.state === 'closed' && (
+                  <span class="goal-row-outcome" style={{ color: goalStateColor(g) }}>
+                    {goalStateLabel(g)}
+                  </span>
+                )}
+                <span class="goal-row-arrow">→</span>
               </div>
-              <div
-                class="goal-delete-btn"
-                onClick={() =>
-                  openConfirm('Delete this goal? This cannot be undone.', () => void deleteGoal(g.id), 'DELETE')
-                }
-              >
-                DELETE
-              </div>
-            </div>
+            ))}
           </div>
-        );
-      })}
+        ))}
     </>
   );
 }

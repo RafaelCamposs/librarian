@@ -63,3 +63,37 @@ _Avoid_: ETA, finish estimate
 **Reading span**:
 The range of calendar days a single book's pages-per-day chart covers, from its start date to its finish date (or today, while reading).
 _Avoid_: Chart window, reading period
+
+### Goals
+
+**Goal**:
+A target number of books to finish within one goal period. At most one goal of each type (annual, monthly) per goal period. A goal has no name; its period is its label ("2026", "NOV 2026").
+_Avoid_: Challenge, target (as the name of the whole thing)
+
+**Goal period**:
+One calendar year (annual) or one calendar month (monthly), in the app's timezone. Never arbitrary dates.
+_Avoid_: Range, window, timeframe
+
+**Current goal** / **Upcoming goal**:
+A goal whose period contains today, or starts after today. Goals can only be created for these, and until they close only their target can change; they can also be deleted. Moving a goal means deleting it and creating another (backend ADR 0006).
+_Avoid_: Active goal, open goal (open is reserved for sessions)
+
+**Closed goal**:
+A goal whose period has ended. Closed by the calendar alone, never stored. Locked: no target change, no delete.
+_Avoid_: Finished goal, expired goal, archived goal
+
+**Books finished** (toward a goal):
+Entries with status `read` whose finish date falls within the goal period. Always derived from the reading list as it is now.
+_Avoid_: Books read, completed books
+
+**Achieved** / **Missed**:
+A closed goal's outcome: achieved when books finished reached the target, otherwise missed. Derived, never frozen.
+_Avoid_: Completed / failed
+
+**Carried over** (shown as CARRIED OVER):
+A book with reading days in a goal period, not finished there, and read again in a later period. Listed on the goal under ALSO READ, never counted. In the period where its reading ends it shows its outcome instead: FINISHED, or its status label (READING, ON HOLD, DID NOT FINISH).
+_Avoid_: Unfinished (the `unfinished` status, shown as DID NOT FINISH, means the reader gave up)
+
+**Goal history**:
+The reader's closed goals, newest period first, annual and monthly together. Periods without a goal don't appear.
+_Avoid_: Archive, log

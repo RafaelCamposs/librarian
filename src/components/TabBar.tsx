@@ -1,4 +1,4 @@
-import { goTo, screen, type Screen } from '../state/store';
+import { goalOrigin, goTo, screen, type Screen } from '../state/store';
 
 const TABS: { key: Screen; label: string }[] = [
   { key: 'dashboard', label: 'DASH' },
@@ -12,7 +12,10 @@ export function TabBar() {
   return (
     <div class="tab-bar">
       {TABS.map((tab) => {
-        const active = current === tab.key || (tab.key === 'list' && current === 'detail');
+        const active =
+          current === tab.key ||
+          (tab.key === 'list' && current === 'detail') ||
+          (current === 'goal' && tab.key === goalOrigin.value);
         return (
           <div
             key={tab.key}

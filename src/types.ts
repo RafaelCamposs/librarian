@@ -37,15 +37,49 @@ export const HIGHLIGHT_MAX_LENGTH = 500;
 
 export type GoalPeriodType = 'annual' | 'monthly';
 
+/** Derived by the backend from today versus the goal period; never stored. */
+export type GoalState = 'current' | 'upcoming' | 'closed';
+
+/** Only set once a goal is closed. */
+export type GoalOutcome = 'achieved' | 'missed';
+
 export interface Goal {
   id: number;
   user_id: number;
   period_type: GoalPeriodType;
+  /** First day of the goal period (Jan 1 or the 1st of the month). */
   period_start: string;
+  /** Last day of the goal period — derived by the backend, never sent. */
   period_end: string;
   target_books: number;
-  /** Client-only, merged in from localStorage — not persisted server-side (see state/goalNames.ts). */
-  name?: string | null;
+  state: GoalState;
+  books_finished: number;
+  outcome: GoalOutcome | null;
+}
+
+export interface GoalFinishedBook {
+  entry_id: number;
+  book_id: number;
+  title: string;
+  cover_url: string | null;
+  finished_at: string;
+}
+
+/** `want_to` and `read` only occur after hand edits (see PRD edge cases). */
+export type GoalAlsoReadLabel = 'carried_over' | ReadingStatus;
+
+export interface GoalAlsoReadBook {
+  entry_id: number;
+  book_id: number;
+  title: string;
+  cover_url: string | null;
+  label: GoalAlsoReadLabel;
+  last_reading_day: string;
+}
+
+export interface GoalDetail extends Goal {
+  finished: GoalFinishedBook[];
+  also_read: GoalAlsoReadBook[];
 }
 
 export interface PagesPerDayPoint {
@@ -97,8 +131,6 @@ export interface OverviewGoal {
   period_end: string;
   target_books: number;
   books_finished: number;
-  /** Client-only, merged in from localStorage — not persisted server-side. */
-  name?: string | null;
 }
 
 export interface OverviewStats {

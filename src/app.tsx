@@ -8,6 +8,7 @@ import { ReadingList } from './components/screens/ReadingList';
 import { AddBook } from './components/screens/AddBook';
 import { BookDetail } from './components/screens/BookDetail';
 import { Goals } from './components/screens/Goals';
+import { GoalPage } from './components/screens/GoalPage';
 
 export function App() {
   useEffect(() => {
@@ -33,6 +34,7 @@ export function App() {
         {current === 'add' && <AddBook />}
         {current === 'goals' && <Goals />}
         {current === 'detail' && <BookDetail />}
+        {current === 'goal' && <GoalPage />}
       </div>
 
       <TabBar />

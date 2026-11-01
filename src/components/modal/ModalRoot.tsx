@@ -11,6 +11,7 @@ export function ModalRoot() {
   let title = '';
   let confirmLabel = 'CONFIRM';
   let onConfirm = () => {};
+  let confirmDisabled = false;
   let body = null;
 
   if (m.type === 'finish') {
@@ -24,8 +25,10 @@ export function ModalRoot() {
     onConfirm = () => void submitHighlightModal();
     body = <HighlightModal />;
   } else if (m.type === 'goalForm') {
-    title = m.editingId ? 'EDIT GOAL' : 'NEW GOAL';
+    title = m.editingId ? 'EDIT TARGET' : 'NEW GOAL';
     confirmLabel = 'SAVE';
+    // A new goal needs a free period; when none is offered the form can't submit.
+    confirmDisabled = !m.editingId && !m.periodStart;
     onConfirm = () => void submitGoalForm();
     body = <GoalFormModal />;
   } else if (m.type === 'confirm') {
@@ -41,7 +44,11 @@ export function ModalRoot() {
         <div class="modal-title">{title}</div>
         {body}
         <div class="btn-row">
-          <div class="btn btn-primary" onClick={onConfirm}>
+          <div
+            class={`btn btn-primary${confirmDisabled ? ' disabled' : ''}`}
+            aria-disabled={confirmDisabled}
+            onClick={confirmDisabled ? undefined : onConfirm}
+          >
             {confirmLabel}
           </div>
           <div class="btn btn-outline" onClick={closeModal}>
