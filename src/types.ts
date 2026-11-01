@@ -72,6 +72,22 @@ export interface OverviewCurrentlyReading {
   book_id: number;
   title: string;
   percent_complete: number | null;
+  /** Latest session's started_at; null when the entry has no sessions. */
+  last_session_at: string | null;
+  /** End page of the latest session, or its start page while it is open; null when the entry has no sessions. */
+  current_page: number | null;
+  /** Pages per day (see CONTEXT.md); null when there is no positive pace. */
+  pace: number | null;
+  /** Remaining pages / pace, rounded up; null without a page count or a pace. */
+  days_left: number | null;
+}
+
+/** The reader's single open session across all entries (fun_library ADR 0004). */
+export interface OpenSession {
+  id: number;
+  entry_id: number;
+  start_page: number;
+  started_at: string;
 }
 
 export interface OverviewGoal {
@@ -88,6 +104,22 @@ export interface OverviewGoal {
 export interface OverviewStats {
   currently_reading: OverviewCurrentlyReading[];
   goals: OverviewGoal[];
+  open_session: OpenSession | null;
+}
+
+/** One reading day (sparse — days without reading are omitted). */
+export interface ActivityDay {
+  date: string;
+  pages_read: number;
+  minutes: number;
+}
+
+export interface DailyHighlight {
+  session_id: number;
+  entry_id: number;
+  book_id: number;
+  book_title: string;
+  highlight: string;
 }
 
 export interface Streak {
