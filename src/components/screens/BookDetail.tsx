@@ -5,10 +5,13 @@ import {
   deleteEntry,
   detailSessions,
   entryStats,
+  entryTitle,
+  openSession,
   openConfirm,
   openFinishSessionModal,
   openHighlightModal,
   selectedEntry,
+  startingSession,
   startSession,
   changeStatus,
   updateEntryPages,
@@ -82,6 +85,8 @@ export function BookDetail() {
   const maxPages = Math.max(1, ...chart.map((c) => (c.date !== null ? c.pages : 0)));
 
   const sessionRows = [...view.sessions].reverse();
+  // The reader's one open session lives on another entry — starting here would be refused (409).
+  const openElsewhere = openSession.value && openSession.value.entry_id !== entry.id ? openSession.value : null;
 
   return (
     <>
@@ -182,11 +187,17 @@ export function BookDetail() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <div class="section-label" style={{ marginBottom: 0 }}>SESSIONS</div>
-        {!view.openSession && entry.status !== 'read' && (
-          <div class="start-session-btn" onClick={() => void startSession(entry.id, view.currentPage)}>
-            START SESSION
-          </div>
-        )}
+        {!view.openSession && entry.status !== 'read' &&
+          (openElsewhere ? (
+            <div class="finish-first-hint inline">finish {entryTitle(openElsewhere.entry_id)} first</div>
+          ) : (
+            <div
+              class={startingSession.value ? 'start-session-btn btn-busy' : 'start-session-btn'}
+              onClick={() => void startSession(entry.id, view.currentPage)}
+            >
+              START SESSION
+            </div>
+          ))}
       </div>
       {sessionRows.map((s) => (
         <div class="card session-row" key={s.id}>
