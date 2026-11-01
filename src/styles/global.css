@@ -755,3 +755,69 @@ button {
   display: flex;
   align-items: center;
 }
+
+.goal-section {
+  margin-bottom: 18px;
+}
+
+.goal-row {
+  justify-content: flex-start;
+  font-size: 12px;
+}
+
+.goal-row-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.goal-row-count {
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.goal-row-outcome {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.goal-row-arrow {
+  color: var(--color-faint);
+}
+
+.goal-header {
+  margin-bottom: 20px;
+}
+
+.goal-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.goal-header-progress {
+  font-size: 12px;
+  color: var(--color-muted);
+  letter-spacing: 0.5px;
+}
+
+.goal-book-meta {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+.goal-form-none {
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--color-faint);
+}
+
+.btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

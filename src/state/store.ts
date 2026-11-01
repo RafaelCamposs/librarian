@@ -4,6 +4,8 @@ import type {
   DailyHighlight,
   EntryStats,
   Goal,
+  GoalDetail,
+  GoalPeriodType,
   OpenSession,
   OverviewStats,
   ReadingListEntry,
@@ -16,11 +18,15 @@ import * as entriesApi from '../api/entries';
 import * as goalsApi from '../api/goals';
 import * as statsApi from '../api/stats';
 import * as booksApi from '../api/books';
-import { getGoalName, setGoalName, removeGoalName } from './goalNames';
 import { nextStatusPatch } from '../lib/status';
+import { freeGoalPeriods } from '../lib/goals';
+import { today } from '../lib/format';
 import { ApiError } from '../types';
 
-export type Screen = 'dashboard' | 'list' | 'add' | 'goals' | 'detail';
+export type Screen = 'dashboard' | 'list' | 'add' | 'goals' | 'detail' | 'goal';
+
+/** Where the goal page was opened from — its back arrow returns there. */
+export type GoalOrigin = 'goals' | 'dashboard';
 
 export type ModalState =
   | {
@@ -36,10 +42,9 @@ export type ModalState =
   | {
       type: 'goalForm';
       editingId: number | null;
-      name: string;
-      periodType: 'annual' | 'monthly';
+      periodType: GoalPeriodType;
+      /** First day of the chosen period; '' when no period of this type is free. */
       periodStart: string;
-      periodEnd: string;
       targetBooks: string;
     }
   | { type: 'confirm'; message: string; confirmLabel: string; onConfirm: () => void }
@@ -54,6 +59,11 @@ export const books = signal<Book[]>([]);
 export const goals = signal<Goal[]>([]);
 export const entriesLoading = signal(false);
 export const goalsLoading = signal(false);
+export const selectedGoalId = signal<number | null>(null);
+export const goalOrigin = signal<GoalOrigin>('goals');
+export const goalDetail = signal<GoalDetail | null>(null);
+export const goalDetailLoading = signal(false);
+export const goalDetailFailed = signal(false);
 export const lastFetchFailed = signal(false);
 
 export const bookById = computed(() => new Map(books.value.map((b) => [b.id, b])));
@@ -103,10 +113,6 @@ export function showToast(message: string): void {
   }, 2200);
 }
 
-function withGoalNames(list: Goal[]): Goal[] {
-  return list.map((g) => ({ ...g, name: getGoalName(g.id) ?? g.name ?? '' }));
-}
-
 export async function loadEntries(): Promise<void> {
   entriesLoading.value = true;
   try {
@@ -124,7 +130,7 @@ export async function loadEntries(): Promise<void> {
 export async function loadGoals(): Promise<void> {
   goalsLoading.value = true;
   try {
-    goals.value = withGoalNames(await goalsApi.listGoals());
+    goals.value = await goalsApi.listGoals();
     lastFetchFailed.value = false;
   } catch {
     lastFetchFailed.value = true;
@@ -137,11 +143,7 @@ export async function loadOverviewStats(): Promise<void> {
   overviewLoading.value = true;
   try {
     const stats = await statsApi.getOverviewStats();
-    overviewStats.value = {
-      ...stats,
-      open_session: stats.open_session ?? null,
-      goals: stats.goals.map((g) => ({ ...g, name: getGoalName(g.goal_id) ?? g.name ?? '' })),
-    };
+    overviewStats.value = { ...stats, open_session: stats.open_session ?? null };
     if (books.value.length === 0) books.value = await booksApi.listBooks();
     lastFetchFailed.value = false;
   } catch {
@@ -201,6 +203,38 @@ export function goTo(next: Screen): void {
   if (next === 'dashboard') void loadOverviewStats();
   else if (next === 'list') void loadEntries();
   else if (next === 'goals') void loadGoals();
+}
+
+export async function loadGoalDetail(id: number): Promise<void> {
+  goalDetailLoading.value = true;
+  try {
+    const detail = await goalsApi.getGoal(id);
+    if (selectedGoalId.value === id) {
+      goalDetail.value = detail;
+      goalDetailFailed.value = false;
+    }
+  } catch {
+    if (selectedGoalId.value === id) goalDetailFailed.value = true;
+  } finally {
+    if (selectedGoalId.value === id) goalDetailLoading.value = false;
+  }
+}
+
+export function openGoal(id: number, from: GoalOrigin): void {
+  screen.value = 'goal';
+  modal.value = null;
+  goalOrigin.value = from;
+  selectedGoalId.value = id;
+  goalDetail.value = null;
+  goalDetailFailed.value = false;
+  void loadGoalDetail(id);
+}
+
+export function backFromGoal(): void {
+  const origin = goalOrigin.value;
+  selectedGoalId.value = null;
+  goalDetail.value = null;
+  goTo(origin);
 }
 
 export function selectEntry(id: number): void {
@@ -468,72 +502,86 @@ export async function submitHighlightModal(): Promise<void> {
   }
 }
 
-/** Full calendar span (YYYY-MM-DD) for a period type, containing today — e.g. so a new "annual" goal defaults to Jan 1–Dec 31, not a single day. */
-export function defaultPeriodRange(periodType: 'annual' | 'monthly'): { start: string; end: string } {
-  const now = new Date();
-  const year = now.getUTCFullYear();
-  if (periodType === 'annual') {
-    return { start: `${year}-01-01`, end: `${year}-12-31` };
-  }
-  const month = now.getUTCMonth();
-  const start = new Date(Date.UTC(year, month, 1));
-  const end = new Date(Date.UTC(year, month + 1, 0));
-  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+/** The first free period of this type, or '' when every period on offer already has a goal. */
+function firstFreePeriod(periodType: GoalPeriodType): string {
+  return freeGoalPeriods(periodType, goals.value, today())[0] ?? '';
 }
 
+/** Pass a goal to edit its target; null starts a new goal. */
 export function openGoalForm(g: Goal | null): void {
-  const defaultRange = defaultPeriodRange('monthly');
   openModal({
     type: 'goalForm',
     editingId: g ? g.id : null,
-    name: g ? g.name || '' : '',
     periodType: g ? g.period_type : 'monthly',
-    periodStart: g ? g.period_start : defaultRange.start,
-    periodEnd: g ? g.period_end : defaultRange.end,
+    periodStart: g ? g.period_start : firstFreePeriod('monthly'),
     targetBooks: g ? String(g.target_books) : '3',
   });
+}
+
+export function setGoalFormType(periodType: GoalPeriodType): void {
+  patchModal({ periodType, periodStart: firstFreePeriod(periodType) });
+}
+
+/** The backend refuses to change or delete a goal whose period has ended (409, reason goal_closed). */
+function isGoalClosedError(err: unknown): boolean {
+  if (!(err instanceof ApiError) || err.status !== 409) return false;
+  const body = err.body;
+  return !!body && typeof body === 'object' && (body as Record<string, unknown>).reason === 'goal_closed';
+}
+
+function handleGoalClosed(id: number): void {
+  showToast("THIS GOAL HAS CLOSED — IT CAN'T BE CHANGED");
+  void loadGoals();
+  void loadOverviewStats();
+  if (screen.value === 'goal' && selectedGoalId.value === id) void loadGoalDetail(id);
 }
 
 export async function submitGoalForm(): Promise<void> {
   const m = modal.value;
   if (!m || m.type !== 'goalForm') return;
-  const target = parseInt(m.targetBooks, 10) || 1;
-  const input = {
-    period_type: m.periodType,
-    period_start: m.periodStart,
-    period_end: m.periodEnd,
-    target_books: target,
-  };
+  const target = parseInt(m.targetBooks, 10);
+  if (Number.isNaN(target) || target < 1) {
+    showToast('TARGET MUST BE AT LEAST 1 BOOK');
+    return;
+  }
+  const editingId = m.editingId;
   try {
-    if (m.editingId) {
-      const updated = await goalsApi.updateGoal(m.editingId, input);
-      setGoalName(m.editingId, m.name || '');
-      goals.value = goals.value.map((g) => (g.id === m.editingId ? { ...updated, name: m.name || '' } : g));
+    if (editingId) {
+      const updated = await goalsApi.updateGoal(editingId, target);
+      goals.value = goals.value.map((g) => (g.id === editingId ? updated : g));
+      if (goalDetail.value?.id === editingId) goalDetail.value = { ...goalDetail.value, ...updated };
     } else {
-      const created = await goalsApi.createGoal(input);
-      setGoalName(created.id, m.name || '');
-      goals.value = [...goals.value, { ...created, name: m.name || '' }];
+      if (!m.periodStart) return;
+      const created = await goalsApi.createGoal({
+        period_type: m.periodType,
+        period_start: m.periodStart,
+        target_books: target,
+      });
+      goals.value = [...goals.value, created];
+      void loadGoals();
     }
     modal.value = null;
     showToast('GOAL SAVED');
     void loadOverviewStats();
   } catch (err) {
     modal.value = null;
-    showToast(err instanceof ApiError ? err.message : 'COULD NOT SAVE GOAL');
+    if (editingId && isGoalClosedError(err)) handleGoalClosed(editingId);
+    else showToast(err instanceof ApiError ? err.message : 'COULD NOT SAVE GOAL');
   }
 }
 
 export async function deleteGoal(id: number): Promise<void> {
   try {
     await goalsApi.deleteGoal(id);
-    removeGoalName(id);
     goals.value = goals.value.filter((g) => g.id !== id);
     modal.value = null;
     showToast('GOAL DELETED');
+    if (screen.value === 'goal' && selectedGoalId.value === id) backFromGoal();
     void loadOverviewStats();
   } catch (err) {
     modal.value = null;
-    showToast(err instanceof ApiError ? err.message : 'COULD NOT DELETE GOAL');
+    if (isGoalClosedError(err)) handleGoalClosed(id);
+    else showToast(err instanceof ApiError ? err.message : 'COULD NOT DELETE GOAL');
   }
 }
 
