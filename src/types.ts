@@ -79,6 +79,11 @@ export interface OverviewStats {
   goals: OverviewGoal[];
 }
 
+export interface Streak {
+  current: number;
+  record: number;
+}
+
 export interface BookLookupResult {
   external_id: string;
   external_source: string;

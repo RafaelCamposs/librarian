@@ -1,5 +1,5 @@
 import { signal, computed } from '@preact/signals';
-import type { EntryStats, Goal, OverviewStats, ReadingListEntry, ReadingSession, ReadingStatus, Book } from '../types';
+import type { EntryStats, Goal, OverviewStats, ReadingListEntry, ReadingSession, ReadingStatus, Streak, Book } from '../types';
 import * as entriesApi from '../api/entries';
 import * as goalsApi from '../api/goals';
 import * as statsApi from '../api/stats';
@@ -42,6 +42,7 @@ export const entryStats = signal<Record<number, EntryStats>>({});
 
 export const overviewStats = signal<OverviewStats | null>(null);
 export const overviewLoading = signal(false);
+export const streak = signal<Streak | null>(null);
 
 export const modal = signal<ModalState>(null);
 export const toast = signal<string | null>(null);
@@ -110,6 +111,15 @@ export async function loadOverviewStats(): Promise<void> {
     lastFetchFailed.value = true;
   } finally {
     overviewLoading.value = false;
+  }
+  void loadStreak();
+}
+
+export async function loadStreak(): Promise<void> {
+  try {
+    streak.value = await statsApi.getStreak();
+  } catch {
+    // leave stale/absent streak — Dashboard just hides the stat
   }
 }
 
