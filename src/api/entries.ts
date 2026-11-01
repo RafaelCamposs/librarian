@@ -41,3 +41,9 @@ export function finishSession(sessionId: number, endPage: number): Promise<Readi
     session: { end_page: endPage, ended_at: new Date().toISOString() },
   });
 }
+
+export function updateSessionHighlight(sessionId: number, highlight: string | null): Promise<ReadingSession> {
+  return api.patch<ReadingSession>(`/reading_sessions/${sessionId}/highlight`, {
+    session: { highlight },
+  });
+}

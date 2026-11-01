@@ -1,5 +1,6 @@
-import { closeModal, modal, submitFinishSession, submitGoalForm } from '../../state/store';
+import { closeModal, modal, submitFinishSession, submitGoalForm, submitHighlightModal } from '../../state/store';
 import { FinishSessionModal } from './FinishSessionModal';
+import { HighlightModal } from './HighlightModal';
 import { GoalFormModal } from './GoalFormModal';
 import { ConfirmModal } from './ConfirmModal';
 
@@ -17,6 +18,11 @@ export function ModalRoot() {
     confirmLabel = 'SAVE';
     onConfirm = () => void submitFinishSession();
     body = <FinishSessionModal />;
+  } else if (m.type === 'highlight') {
+    title = 'HIGHLIGHT';
+    confirmLabel = 'SAVE';
+    onConfirm = () => void submitHighlightModal();
+    body = <HighlightModal />;
   } else if (m.type === 'goalForm') {
     title = m.editingId ? 'EDIT GOAL' : 'NEW GOAL';
     confirmLabel = 'SAVE';

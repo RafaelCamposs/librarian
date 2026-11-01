@@ -11,7 +11,8 @@ import { ApiError } from '../types';
 export type Screen = 'dashboard' | 'list' | 'add' | 'goals' | 'detail';
 
 export type ModalState =
-  | { type: 'finish'; sessionId: number; endPage: string; maxPage: number | null }
+  | { type: 'finish'; sessionId: number; endPage: string; maxPage: number | null; highlight: string }
+  | { type: 'highlight'; sessionId: number; highlight: string }
   | {
       type: 'goalForm';
       editingId: number | null;
@@ -340,7 +341,7 @@ export async function startSession(entryId: number, startPage: number): Promise<
 }
 
 export function openFinishSessionModal(sessionId: number, currentPage: number, maxPage: number | null): void {
-  openModal({ type: 'finish', sessionId, endPage: String(currentPage), maxPage });
+  openModal({ type: 'finish', sessionId, endPage: String(currentPage), maxPage, highlight: '' });
 }
 
 export async function submitFinishSession(): Promise<void> {
@@ -352,6 +353,7 @@ export async function submitFinishSession(): Promise<void> {
     return;
   }
   const entryId = selectedEntryId.value;
+  const highlight = m.highlight.trim();
   try {
     const session = await entriesApi.finishSession(m.sessionId, endPage);
     detailSessions.value = detailSessions.value.map((s) => (s.id === session.id ? session : s));
@@ -363,9 +365,37 @@ export async function submitFinishSession(): Promise<void> {
     }
     modal.value = null;
     showToast('SESSION SAVED');
+
+    if (highlight) {
+      try {
+        const withHighlight = await entriesApi.updateSessionHighlight(session.id, highlight);
+        detailSessions.value = detailSessions.value.map((s) => (s.id === withHighlight.id ? withHighlight : s));
+      } catch {
+        showToast("SESSION FINISHED, BUT THE HIGHLIGHT COULDN'T BE SAVED — TAP THE SESSION TO TRY AGAIN");
+      }
+    }
   } catch (err) {
     modal.value = null;
     showToast(err instanceof ApiError ? err.message : 'COULD NOT SAVE SESSION');
+  }
+}
+
+export function openHighlightModal(sessionId: number, currentHighlight: string | null): void {
+  openModal({ type: 'highlight', sessionId, highlight: currentHighlight ?? '' });
+}
+
+export async function submitHighlightModal(): Promise<void> {
+  const m = modal.value;
+  if (!m || m.type !== 'highlight') return;
+  const highlight = m.highlight.trim();
+  try {
+    const session = await entriesApi.updateSessionHighlight(m.sessionId, highlight || null);
+    detailSessions.value = detailSessions.value.map((s) => (s.id === session.id ? session : s));
+    modal.value = null;
+    showToast('HIGHLIGHT SAVED');
+  } catch (err) {
+    modal.value = null;
+    showToast(err instanceof ApiError ? err.message : 'COULD NOT SAVE HIGHLIGHT');
   }
 }
 

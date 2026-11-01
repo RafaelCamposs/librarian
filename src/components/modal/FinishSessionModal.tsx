@@ -1,4 +1,5 @@
 import { modal, patchModal } from '../../state/store';
+import { HIGHLIGHT_MAX_LENGTH } from '../../types';
 
 export function FinishSessionModal() {
   const m = modal.value;
@@ -23,6 +24,18 @@ export function FinishSessionModal() {
         }}
         style={{ marginBottom: 16 }}
       />
+      <div class="field-label">HIGHLIGHT (OPTIONAL)</div>
+      <textarea
+        class="text-input textarea-input"
+        rows={3}
+        maxLength={HIGHLIGHT_MAX_LENGTH}
+        placeholder="A passage worth remembering…"
+        value={m.highlight}
+        onInput={(e) => patchModal({ highlight: (e.target as HTMLTextAreaElement).value })}
+      />
+      <div class="char-count">
+        {m.highlight.length}/{HIGHLIGHT_MAX_LENGTH}
+      </div>
     </>
   );
 }

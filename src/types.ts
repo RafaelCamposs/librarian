@@ -30,7 +30,10 @@ export interface ReadingSession {
   end_page: number | null;
   started_at: string;
   ended_at: string | null;
+  highlight: string | null;
 }
+
+export const HIGHLIGHT_MAX_LENGTH = 500;
 
 export type GoalPeriodType = 'annual' | 'monthly';
 
