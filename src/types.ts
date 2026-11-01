@@ -53,7 +53,15 @@ export interface PagesPerDayPoint {
 export interface EntryStats {
   percent_complete: number | null;
   days_elapsed: number | null;
+  /** Days the chart covers, in the app's timezone; null when the entry has no start date. */
+  reading_span: ReadingSpan | null;
+  /** Only days with reading, within the reading span. */
   pages_per_day: PagesPerDayPoint[];
+}
+
+export interface ReadingSpan {
+  start_date: string;
+  end_date: string;
 }
 
 export interface OverviewCurrentlyReading {

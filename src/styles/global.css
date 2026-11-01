@@ -461,15 +461,23 @@ button {
 .chart-card {
   padding: 14px 8px;
   display: flex;
-  justify-content: space-between;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
 }
 
+.chart-card::-webkit-scrollbar {
+  display: none;
+}
+
+/* Seven columns fill the card; any older days of the reading span scroll in from the left. */
 .chart-col {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  flex: 1;
+  flex: 0 0 calc(100% / 7);
+  scroll-snap-align: start;
 }
 
 .chart-pages {
@@ -481,10 +489,11 @@ button {
 .chart-spark {
   font-size: 26px;
   line-height: 1;
+  height: 26px;
   color: var(--color-accent);
 }
 
-.chart-weekday {
+.chart-date {
   font-size: 9px;
   color: var(--color-muted);
 }

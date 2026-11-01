@@ -1,22 +1,21 @@
 export function addDays(dateStr: string, n: number): string {
-  const d = new Date(`${dateStr}T00:00:00`);
-  d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
 }
 
 export function daysBetween(a: string, b: string): number {
   return Math.max(0, Math.round((new Date(`${b}T00:00:00`).getTime() - new Date(`${a}T00:00:00`).getTime()) / 86400000));
 }
 
-export function weekday(dateStr: string): string {
-  return new Date(`${dateStr}T00:00:00`)
-    .toLocaleDateString('en-US', { weekday: 'short' })
-    .slice(0, 3)
-    .toUpperCase();
+/** Formats a YYYY-MM-DD date as "01 Nov". */
+export function dayMonth(dateStr: string): string {
+  return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 }
 
+/** Today's date (YYYY-MM-DD) on the device's calendar — not the UTC date, which is already tomorrow late in the evening west of UTC. */
 export function today(): string {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 function pad(n: number): string {

@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import {
   backToList,
   bookById,
@@ -12,20 +12,53 @@ import {
   changeStatus,
   updateEntryPages,
 } from '../../state/store';
-import type { ReadingStatus } from '../../types';
+import type { EntryStats, ReadingStatus } from '../../types';
 import { buildEntryView } from '../../lib/entryView';
 import { bar } from '../../lib/bar';
 import { sparkChar } from '../../lib/sparkline';
-import { addDays, formatDateTime, formatDuration, formatTime, today, weekday } from '../../lib/format';
+import { addDays, dayMonth, formatDateTime, formatDuration, formatTime } from '../../lib/format';
 import { STATUS_COLOR, STATUS_LABEL } from '../../lib/status';
 import { CoverImage } from '../CoverImage';
 
 const STATUS_OPTIONS: ReadingStatus[] = ['read', 'stopped', 'unfinished'];
+const CHART_DAYS = 7;
+
+type ChartColumn = { date: string; pages: number } | { date: null; key: string };
+
+/**
+ * One column per day of the reading span, padded with blank placeholders
+ * before the start date so there are always at least 7 columns
+ * (see fun_library ADR 0003).
+ */
+function buildChart(stats: EntryStats | undefined): ChartColumn[] {
+  const span = stats?.reading_span;
+  if (!span) return [];
+  const perDay = new Map(stats.pages_per_day.map((p) => [p.date, p.pages_read]));
+  const days: ChartColumn[] = [];
+  for (let date = span.start_date; date <= span.end_date; date = addDays(date, 1)) {
+    days.push({ date, pages: perDay.get(date) ?? 0 });
+  }
+  const placeholders = Array.from({ length: Math.max(0, CHART_DAYS - days.length) }, (_, i) => ({
+    date: null,
+    key: `pad-${i}`,
+  }));
+  return [...placeholders, ...days];
+}
 
 export function BookDetail() {
   const entry = selectedEntry.value;
   const [editingPages, setEditingPages] = useState(false);
   const [pagesInput, setPagesInput] = useState('');
+  const chartRef = useRef<HTMLDivElement>(null);
+  const stats = entry ? entryStats.value[entry.id] : undefined;
+  const span = stats?.reading_span;
+
+  // Open the chart on the last 7 days of the span; older days are a scroll to the left.
+  useLayoutEffect(() => {
+    const el = chartRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [entry?.id, span?.start_date, span?.end_date]);
+
   if (!entry) return null;
   const book = bookById.value.get(entry.book_id);
   const totalPages = entry.total_pages ?? book?.total_pages ?? null;
@@ -40,19 +73,12 @@ export function BookDetail() {
   }
 
   const view = buildEntryView(detailSessions.value);
-  const stats = entryStats.value[entry.id];
   const percent = entry.status === 'read' ? 100 : stats?.percent_complete != null ? Math.round(stats.percent_complete) : null;
   const daysElapsed = stats?.days_elapsed ?? null;
   const pbar = bar(percent, 24);
 
-  const perDay = new Map((stats?.pages_per_day ?? []).map((p) => [p.date, p.pages_read]));
-  const chart = [];
-  for (let i = 6; i >= 0; i--) {
-    const date = addDays(today(), -i);
-    const pages = perDay.get(date) ?? 0;
-    chart.push({ date, label: weekday(date), pages });
-  }
-  const maxPages = Math.max(1, ...chart.map((c) => c.pages));
+  const chart = buildChart(stats);
+  const maxPages = Math.max(1, ...chart.map((c) => (c.date !== null ? c.pages : 0)));
 
   const sessionRows = [...view.sessions].reverse();
 
@@ -132,16 +158,24 @@ export function BookDetail() {
             {daysElapsed != null ? `${daysElapsed} days since start` : 'not started'}
           </div>
 
-          <div class="section-label">PAGES / DAY (LAST 7 DAYS)</div>
-          <div class="card chart-card" style={{ marginBottom: 18 }}>
-            {chart.map((d) => (
-              <div class="chart-col" key={d.date}>
-                <div class="chart-pages">{d.pages > 0 ? d.pages : ''}</div>
-                <div class="chart-spark">{sparkChar(d.pages, maxPages)}</div>
-                <div class="chart-weekday">{d.label}</div>
+          {chart.length > 0 && (
+            <>
+              <div class="section-label">PAGES / DAY</div>
+              <div class="card chart-card" ref={chartRef} style={{ marginBottom: 18 }}>
+                {chart.map((d) =>
+                  d.date !== null ? (
+                    <div class="chart-col" key={d.date}>
+                      <div class="chart-pages">{d.pages > 0 ? d.pages : ''}</div>
+                      <div class="chart-spark">{sparkChar(d.pages, maxPages)}</div>
+                      <div class="chart-date">{dayMonth(d.date)}</div>
+                    </div>
+                  ) : (
+                    <div class="chart-col" key={d.key} />
+                  ),
+                )}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </>
       )}
 
