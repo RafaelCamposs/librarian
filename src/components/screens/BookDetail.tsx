@@ -7,6 +7,7 @@ import {
   entryStats,
   openConfirm,
   openFinishSessionModal,
+  openHighlightModal,
   selectedEntry,
   startSession,
   changeStatus,
@@ -206,6 +207,14 @@ export function BookDetail() {
               onClick={() => openFinishSessionModal(s.id, view.currentPage, totalPages)}
             >
               FINISH
+            </div>
+          )}
+          {s.ended_at && (
+            <div
+              class={s.highlight ? 'highlight-chip' : 'highlight-chip empty'}
+              onClick={() => openHighlightModal(s.id, s.highlight)}
+            >
+              {s.highlight ? '❝' : '+'}
             </div>
           )}
         </div>

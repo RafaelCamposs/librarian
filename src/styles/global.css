@@ -266,6 +266,22 @@ button {
   background: var(--color-card-bg);
 }
 
+.textarea-input {
+  height: auto;
+  min-height: 72px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+.char-count {
+  font-size: 10px;
+  color: var(--color-faint);
+  text-align: right;
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+
 /* ---------- reading list ---------- */
 
 .filter-chips {
@@ -541,6 +557,26 @@ button {
   min-height: 32px;
   display: flex;
   align-items: center;
+}
+
+.highlight-chip {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+  font-size: 14px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  min-height: 32px;
+  min-width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.highlight-chip.empty {
+  border: 1px dashed var(--color-border);
+  color: var(--color-muted);
 }
 
 .remove-btn {
