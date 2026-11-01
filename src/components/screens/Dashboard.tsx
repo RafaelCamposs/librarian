@@ -1,4 +1,4 @@
-import { bookById, overviewStats, selectEntry } from '../../state/store';
+import { bookById, overviewStats, streak, selectEntry } from '../../state/store';
 import { goalLabel } from '../../lib/goals';
 import { BlockBar } from '../BlockBar';
 import { CoverImage } from '../CoverImage';
@@ -7,9 +7,23 @@ export function Dashboard() {
   const stats = overviewStats.value;
   const goals = stats?.goals ?? [];
   const currentlyReading = stats?.currently_reading ?? [];
+  const currentStreak = streak.value?.current ?? 0;
+  const streakRecord = streak.value?.record ?? 0;
 
   return (
     <>
+      <div class="section-label">STREAK</div>
+      {streakRecord > 0 ? (
+        <div class="card" style={{ marginBottom: 20, display: 'flex' }}>
+          <StreakStat label="CURRENT" days={currentStreak} />
+          <StreakStat label="RECORD" days={streakRecord} />
+        </div>
+      ) : (
+        <div class="empty-state" style={{ marginBottom: 20 }}>
+          no reading days yet — finish a session to start a streak
+        </div>
+      )}
+
       <div class="section-label">GOALS</div>
       {goals.length > 0 ? (
         goals.map((g) => {
@@ -64,5 +78,16 @@ export function Dashboard() {
         <div class="empty-state">nothing in progress — start a session from a book</div>
       )}
     </>
+  );
+}
+
+function StreakStat({ label, days }: { label: string; days: number }) {
+  return (
+    <div style={{ flex: 1 }}>
+      <div style={{ fontSize: 11, color: 'var(--color-muted)', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 16, color: 'var(--color-accent)' }}>
+        {days} {days === 1 ? 'DAY' : 'DAYS'}
+      </div>
+    </div>
   );
 }
