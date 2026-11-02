@@ -1,4 +1,4 @@
-import { useEffect } from 'preact/hooks';
+import { useEffect, useRef } from 'preact/hooks';
 import { initApp, lastFetchFailed, screen } from './state/store';
 import { TabBar } from './components/TabBar';
 import { Toast } from './components/Toast';
@@ -16,6 +16,12 @@ export function App() {
   }, []);
 
   const current = screen.value;
+  const mainRef = useRef<HTMLDivElement>(null);
+
+  // .app-main is the scroll container and outlives screen swaps; start each screen at the top.
+  useEffect(() => {
+    mainRef.current?.scrollTo(0, 0);
+  }, [current]);
 
   return (
     <div class="app-shell">
@@ -27,7 +33,7 @@ export function App() {
         </div>
       </div>
 
-      <div class="app-main">
+      <div class="app-main" ref={mainRef}>
         {lastFetchFailed.value && <div class="offline-banner">showing last cached data</div>}
         {current === 'dashboard' && <Dashboard />}
         {current === 'list' && <ReadingList />}
